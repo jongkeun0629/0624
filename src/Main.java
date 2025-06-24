@@ -1,58 +1,54 @@
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.reflect.Method;
-
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE, ElementType.METHOD})
-@interface CustomInfo{
-    String author();
-    String date();
-    int version() default 1;
-}
-
-@CustomInfo(author = "jongkeun", date = "2025-06-24", version = 2)
-class Demo{
-
-    @CustomInfo(author = "method", date = "2025-06-27")
-    public void display(){
-        System.out.println("display method");
-    }
-}
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class Main {
-    public static void main(String[] args) {
-        Demo demo = new Demo();
+    public static void writeFile(String filename, String content){
 
-        Class<?> demoClass = demo.getClass();
+        // 기존 방식. finally로 파일 닫아주어야 함
+//        FileWriter writer = null;
+//        try {
+//            writer = new FileWriter(filename);
+//            writer.write(content);
+//        } catch (IOException e){
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (writer != null) writer.close();
+//            } catch (IOException e){
+//                e.printStackTrace();
+//            }
+//        }
 
-        // 클래스
-        if (demoClass.isAnnotationPresent(CustomInfo.class)){
-            CustomInfo classInfo = demoClass.getAnnotation(CustomInfo.class);
-            System.out.println("<Class>");
-            System.out.println("Author: " + classInfo.author());
-            System.out.println("Date: " + classInfo.date());
-            System.out.println("Version: " + classInfo.version());
+        // try-with-resources. 파일 자동으로 닫는다
+        try (FileWriter writer = new FileWriter(filename, true)) {      // 두 번째 인자 true. 이어쓰기
+            writer.write(content);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
-        System.out.println();
+    }
 
-        // 메서드
-        try {
-            Method m = demoClass.getMethod("display");
+    public static void readFile(String filename){
+        try (BufferedReader reader= new BufferedReader(new FileReader(filename))){
+            String line;
 
-            if (m.isAnnotationPresent(CustomInfo.class)){
-                CustomInfo mi = m.getAnnotation(CustomInfo.class);
-                System.out.println(
-                        "<Method>\nAuthor: " + mi.author() +
-                        ", Date: " + mi.date() +
-                        ", Version: " + mi.version()
-                );
+            // 마지막줄까지
+            while((line = reader.readLine()) != null){
+                System.out.println(line);
             }
-
-        } catch (NoSuchMethodException e){
-            e.getStackTrace();
+        } catch (IOException e){
+            e.printStackTrace();
         }
+    }
+
+
+
+    public static void main(String[] args) {
+//        writeFile("example.txt", "\n이어쓰기");
+//        System.out.println("파일 생성 완료");
+
+        readFile("example.txt");
     }
 }
